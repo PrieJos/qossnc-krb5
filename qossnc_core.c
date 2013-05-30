@@ -115,24 +115,21 @@ struct sapgss_info_s {				/* out of SNC adapter source code       */
 /*
  * qosIT SNC library constructor and destructor 
  */
-static void __library_attach(void) CONSTRUCTOR_FUNCTION;
-static void __library_detach(void) DESTRUCTOR_FUNCTION;
-
-static void __library_attach(void)
+void CONSTRUCTOR_FUNCTION
+__library_attach(void)
 {
 	/* ToDo:
 	 * initialize trace library
 	 */
-	qossnc_krb5_initialize();
 	return;
 }
 
-static void __library_detach(void)
+void DESTRUCTOR_FUNCTION
+__library_detach(void)
 {
 	/* ToDo:
 	 * deinitialize trace library
 	 */
-	qossnc_krb5_free();
 	return;
 }
 
