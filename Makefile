@@ -1,13 +1,13 @@
 #
 #
 #
-
 RM			= rm -f 
 OBJ			= .o 
 SHEXT		= .so
 SHINIT		= __library_attach
 SHFINI		= __library_detach
-
+KRB5INC		=
+KRB5LIB		= -lgssapi_krb5
 XLIB		= lib
 XNAME		= qossnc_krb5
 SRCS 		= qossnc_core.c qossnc_gss.c qossnc_krb5.c
@@ -15,8 +15,8 @@ OBJS		= $(patsubst %.c,%.o,$(SRCS))
 TARGET		= $(XLIB)$(XNAME)$(SHEXT)
 
 CC			= gcc 
-CFLAGS		= -Wall -ansi -I../build/opt/qk5/include -fPIC -DQOSSNC_UNIX
-LIBS		= -ldl -lgssapi_krb5
+CFLAGS		= -Wall -ansi -fPIC -DQOSSNC_UNIX
+LIBS		= -ldl $(KRB5LIB) 
 LD			= gcc 
 LDFLAGS		= -shared
 
@@ -24,6 +24,10 @@ ifeq ($(DEBUG),1)
 	CFLAGS += -g -O0
 else
 	CFLAGS += -O2
+endif
+
+ifneq ($(KRB5INC),)
+	CFLAGS += -I$(KRB5INC)
 endif
 
 ifdef SHINIT
