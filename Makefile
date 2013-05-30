@@ -18,7 +18,7 @@ CC			= gcc
 CFLAGS		= -Wall -ansi -fPIC -DQOSSNC_UNIX
 LIBS		= -ldl $(KRB5LIB) 
 LD			= gcc 
-LDFLAGS		= -shared
+LDFLAGS		= -Wall -shared
 
 ifeq ($(DEBUG),1)
 	CFLAGS += -g -O0
