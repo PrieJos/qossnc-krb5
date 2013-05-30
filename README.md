@@ -3,7 +3,7 @@ SNC Adapter for MIT Kerberos 5
 
 This is a wrapper library that implements a SNC adapter for using MT Kerberos 5 in SAP environments. It is based on SNC adapter skeleton provided by SAP at reference \[1\].
 
-So far it is only supported in Linux x86\_64. Still work in progress support for Windows x64.  
+This project is still in a very alpha stage. So far it is only supported in Linux x86\_64. Still work in progress support for Windows x64.  
 
 References
 ==========
