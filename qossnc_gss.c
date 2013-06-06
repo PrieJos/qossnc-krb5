@@ -1,7 +1,6 @@
 /* vim: set noet ai ts=4 sw=4: */
 
 #include <string.h>
-#include <errno.h>
 #include <stdlib.h>
 #include <gssapi/gssapi.h>
 

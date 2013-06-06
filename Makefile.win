@@ -1,0 +1,38 @@
+#
+#
+#
+RM			= "del 2>NUL"
+OBJ			= .obj
+SHEXT		= .dll
+KRB5HOME	= C:\workspace\qossnc\build\qk5\x64
+KRB5INC		= /I$(KRB5HOME)\include
+KRB5LIB		= $(KRB5HOME)\lib\gssapi64.lib $(KRB5HOME)\lib\krb5_64.lib
+XLIB		= lib
+XNAME		= qossnc_krb5
+SRCS 		= qossnc_core.c qossnc_gss.c qossnc_krb5.c
+OBJS		= qossnc_core$(OBJ) qossnc_gss$(OBJ) qossnc_krb5$(OBJ)
+TARGET		= $(XLIB)$(XNAME)
+
+CC			= cl /nologo 
+CFLAGS		= /TC /W3 /O2 /Ob1 /Ot /D "QOSSNC_WINDOWS" $(KRB5INC)
+LD			= link /nologo
+LDFLAGS		= /OUT:"$@$(SHEXT)" /IMPLIB:"$@.lib" /DLL /MACHINE:X86 \
+				/VERBOSE:Lib $(KRB5LIB)
+
+### targets
+all: $(TARGET)
+
+clean:
+	$(RM) core
+	$(RM) *$(OBJ)
+	$(RM) $(TARGET)*
+
+$(TARGET): $(OBJS)
+	$(LD) $(LDFLAGS) $(OBJS)
+	
+### dependencies
+qossnc_core.c: qossnc_gss.c qossnc_krb5.c
+
+qossnc_gss.c: qossnc_gss.h
+
+qossnc_krb5.c: qossnc_krb5.h

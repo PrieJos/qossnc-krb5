@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
 #include <gssapi/gssapi_krb5.h>
 
 #include "qossnc_gss.h"
@@ -12,13 +11,19 @@
 
 #define STRINGIZEX(s)           #s
 #define STRINGIZE(s)            STRINGIZEX(s)
-#define UNREFERENCED_PARAMETER(a) \
-			((a)=(a))
 
 #ifdef QOSSNC_WINDOWS
-#define EXPORT_FUNCTION
+#include <windows.h>
+#define EXPORT_FUNCTION __declspec(dllexport)
+#define EXPORT_DATA     __declspec(dllexport)
+#define IMPORT_FUNCTION __declspec(dllimport)
+#define IMPORT_DATA     __declspec(dllimport)
 #else	/* QOSSNC_WINDOWS */
+#define UNREFERENCED_PARAMETER(a) ((a)=(a))
 #define EXPORT_FUNCTION
+#define EXPORT_DATA
+#define IMPORT_FUNCTION
+#define IMPORT_DATA
 #endif	/* QOSSNC_WINDOWS */
 
 #ifdef QOSSNC_UNIX
@@ -65,11 +70,16 @@ static gss_OID_desc qossnc_oids[] = {
 };
 static gss_OID const qossnc_mech_oid = (gss_OID)qossnc_oids+0;
 static gss_OID const qossnc_nt_oid = (gss_OID)qossnc_oids+2;
+#ifdef __STRICT_ANSI__
 static gss_OID_set_desc const qossnc_mech_oids = {
 	.count = 2,
 	.elements = (gss_OID)qossnc_oids+0,
 };
-
+#else
+static gss_OID_set_desc const qossnc_mech_oids = {
+    2, (gss_OID)qossnc_oids+0
+};
+#endif
 
 /*
  * SAP SNC adapter defintions
@@ -115,6 +125,19 @@ struct sapgss_info_s {				/* out of SNC adapter source code       */
 /*
  * qosIT SNC library constructor and destructor 
  */
+
+#ifdef QOSSNC_WINDOWS
+BOOL APIENTRY
+DllMain(HANDLE hInst, DWORD ul_reason_being_called, LPVOID lpReserved)
+{
+    return TRUE;
+
+    UNREFERENCED_PARAMETER(hInst);
+    UNREFERENCED_PARAMETER(ul_reason_being_called);
+    UNREFERENCED_PARAMETER(lpReserved);
+}
+#endif  /* QOSSNC_WINDOWS */
+
 void CONSTRUCTOR_FUNCTION
 __library_attach(void)
 {
@@ -140,7 +163,7 @@ __library_detach(void)
 /* 
  * specific SNC adapter functions 
  */
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapsnc_init_adapter(struct sapgss_info_s *p_info, size_t p_length,
 	int adapter_idx)
 {
@@ -181,7 +204,7 @@ sapsnc_init_adapter(struct sapgss_info_s *p_info, size_t p_length,
  * historical SNC adapter function
  * leave it up as is
  */
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapsnc_export_cname_blob(OM_uint32 *min_stat, gss_name_t in_name,
 	gss_buffer_t out_identity, int adapter_idx)
 {
@@ -204,7 +227,7 @@ sapsnc_export_cname_blob(OM_uint32 *min_stat, gss_name_t in_name,
  * historical SNC adapter function
  * leave it up as is
  */
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapsnc_import_cname_blob(OM_uint32 *min_stat, gss_buffer_t in_identity,
 	gss_name_t *out_name, int adapter_idx)
 {
@@ -218,7 +241,7 @@ sapsnc_import_cname_blob(OM_uint32 *min_stat, gss_buffer_t in_identity,
  * GSS-API v1 (RFC 1508/1509)
  */
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_acquire_cred(OM_uint32 *min_stat, gss_name_t  my_gss_name,
 	OM_uint32 in_lifetime, gss_OID_set in_mechs,
 	gss_cred_usage_t in_cred_usage, gss_cred_id_t  *out_cred,
@@ -245,14 +268,14 @@ sapgss_acquire_cred(OM_uint32 *min_stat, gss_name_t  my_gss_name,
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_release_cred(OM_uint32 * min_stat, gss_cred_id_t *in_cred)
 {
 	return gss_release_cred(min_stat, in_cred);
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_init_sec_context(OM_uint32 *min_stat, gss_cred_id_t in_cred,	
 	gss_ctx_id_t *in_context, gss_name_t in_name, gss_OID in_mech,
 	OM_uint32 in_service_opts, OM_uint32 in_lifetime, 
@@ -267,7 +290,7 @@ sapgss_init_sec_context(OM_uint32 *min_stat, gss_cred_id_t in_cred,
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_accept_sec_context(OM_uint32 *min_stat, gss_ctx_id_t *in_context,
 	gss_cred_id_t in_cred, gss_buffer_t in_token, 
 	gss_channel_bindings_t in_channel_bind,	gss_name_t *peer_name,
@@ -280,7 +303,7 @@ sapgss_accept_sec_context(OM_uint32 *min_stat, gss_ctx_id_t *in_context,
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_process_context_token(OM_uint32 *min_stat, gss_ctx_id_t in_context,
 	gss_buffer_t in_token)
 {
@@ -288,7 +311,7 @@ sapgss_process_context_token(OM_uint32 *min_stat, gss_ctx_id_t in_context,
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_delete_sec_context(OM_uint32 *min_stat, gss_ctx_id_t *in_context,
 	gss_buffer_t out_token)
 {
@@ -296,7 +319,7 @@ sapgss_delete_sec_context(OM_uint32 *min_stat, gss_ctx_id_t *in_context,
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_context_time(OM_uint32 *min_stat, gss_ctx_id_t in_context,
 	OM_uint32 *out_lifetime)
 {
@@ -304,7 +327,7 @@ sapgss_context_time(OM_uint32 *min_stat, gss_ctx_id_t in_context,
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_get_mic(OM_uint32 *min_stat,	gss_ctx_id_t in_context,
 	gss_qop_t in_qop, gss_buffer_t in_msg, gss_buffer_t out_token)
 {
@@ -312,7 +335,7 @@ sapgss_get_mic(OM_uint32 *min_stat,	gss_ctx_id_t in_context,
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_verify_mic(OM_uint32 *min_stat, gss_ctx_id_t in_context,
 	gss_buffer_t in_msg, gss_buffer_t in_token, gss_qop_t *out_qop)
 {
@@ -320,7 +343,7 @@ sapgss_verify_mic(OM_uint32 *min_stat, gss_ctx_id_t in_context,
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_wrap(OM_uint32 *min_stat, gss_ctx_id_t in_context, int in_want_conf,
 	gss_qop_t in_qop, gss_buffer_t in_msg, int *out_is_conf,
 	gss_buffer_t out_token)
@@ -330,7 +353,7 @@ sapgss_wrap(OM_uint32 *min_stat, gss_ctx_id_t in_context, int in_want_conf,
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_unwrap(OM_uint32 *min_stat, gss_ctx_id_t in_context,	
 	gss_buffer_t in_token, gss_buffer_t out_msg, int *out_is_conf,
 	gss_qop_t *out_qop)
@@ -340,7 +363,7 @@ sapgss_unwrap(OM_uint32 *min_stat, gss_ctx_id_t in_context,
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_display_status(OM_uint32 *min_stat, OM_uint32 in_status, 	
 	int in_status_type, gss_OID in_mech, OM_uint32 *out_more_text,
 	gss_buffer_t out_text)
@@ -355,7 +378,7 @@ sapgss_display_status(OM_uint32 *min_stat, OM_uint32 in_status,
  * for this implementation in the first position of the out_mechs OID array.
  * This is why array is rearrange after GSSAPI original call
  */
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_indicate_mechs(OM_uint32 *min_stat, gss_OID_set *out_mechs)
 {
 	OM_uint32 maj_stat;
@@ -385,7 +408,7 @@ sapgss_indicate_mechs(OM_uint32 *min_stat, gss_OID_set *out_mechs)
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_compare_name(OM_uint32 *min_stat, gss_name_t in_name1,
 	gss_name_t in_name2, int *out_are_equal)
 {
@@ -393,7 +416,7 @@ sapgss_compare_name(OM_uint32 *min_stat, gss_name_t in_name1,
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_display_name(OM_uint32 *min_stat, gss_name_t in_name,
 	gss_buffer_t out_identity, gss_OID *out_oid)
 {
@@ -401,7 +424,7 @@ sapgss_display_name(OM_uint32 *min_stat, gss_name_t in_name,
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_import_name(OM_uint32 *min_stat, gss_buffer_t in_identity,
 	gss_OID in_oid, gss_name_t *out_name)
 {
@@ -409,28 +432,28 @@ sapgss_import_name(OM_uint32 *min_stat, gss_buffer_t in_identity,
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_release_name(OM_uint32 *min_stat, gss_name_t *in_name)
 {
 	return gss_release_name(min_stat, in_name);
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_release_buffer(OM_uint32 *min_stat, gss_buffer_t in_buffer)
 {
 	return gss_release_buffer(min_stat, in_buffer);
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_release_oid_set(OM_uint32 *min_stat, gss_OID_set *in_oids)
 {
 	return gss_release_oid_set(min_stat, in_oids);
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_inquire_cred(OM_uint32 *min_stat, gss_cred_id_t in_cred,
 	gss_name_t *out_name, OM_uint32 *out_lifetime, 
 	gss_cred_usage_t *out_cred_usage, gss_OID_set *out_mechs)
@@ -445,7 +468,7 @@ sapgss_inquire_cred(OM_uint32 *min_stat, gss_cred_id_t in_cred,
  */
 
 /* status:  not used by SNC in R/3 release 3.x and 4.0 */
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_add_cred(OM_uint32 *min_stat, gss_cred_id_t input_cred_handle,
 	gss_name_t desired_name, gss_OID desired_mech, gss_cred_usage_t cred_usage, 
 	OM_uint32 initiator_time_req, OM_uint32 acceptor_time_req,
@@ -462,7 +485,7 @@ sapgss_add_cred(OM_uint32 *min_stat, gss_cred_id_t input_cred_handle,
 /* status:  not used by SNC in R/3 release 3.x and 4.0
  *          this may change in future releases
  */
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_inquire_cred_by_mech(OM_uint32 *min_stat, gss_cred_id_t cred_handle,
 	gss_OID mech_type, gss_name_t *name, OM_uint32 *initiator_lifetime,
 	OM_uint32 *acceptor_lifetime, gss_cred_usage_t *cred_usage)
@@ -472,7 +495,7 @@ sapgss_inquire_cred_by_mech(OM_uint32 *min_stat, gss_cred_id_t cred_handle,
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_inquire_context(OM_uint32 *min_stat, gss_ctx_id_t in_context,
 	gss_name_t *out_myname, gss_name_t *out_peername, OM_uint32 *out_lifetime,
 	gss_OID *out_mech, OM_uint32 *out_service_opts, int *out_initiator,
@@ -487,7 +510,7 @@ sapgss_inquire_context(OM_uint32 *min_stat, gss_ctx_id_t in_context,
 /* status:  not used by SNC in R/3 release 3.x and 4.0
  *          this may change in future releases
  */
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_wrap_size_limit(OM_uint32 *min_stat, gss_ctx_id_t in_context,
 	int in_want_conf, gss_qop_t qop_req, OM_uint32 out_size, 
 	OM_uint32 *max_in_size)
@@ -497,7 +520,7 @@ sapgss_wrap_size_limit(OM_uint32 *min_stat, gss_ctx_id_t in_context,
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_export_sec_context(OM_uint32 *min_stat, gss_ctx_id_t  *in_ctx,
 	gss_buffer_t out_buffer)
 {
@@ -505,7 +528,7 @@ sapgss_export_sec_context(OM_uint32 *min_stat, gss_ctx_id_t  *in_ctx,
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_import_sec_context(OM_uint32 *min_stat, gss_buffer_t in_buffer,
 	gss_ctx_id_t *out_ctx)
 {
@@ -513,7 +536,7 @@ sapgss_import_sec_context(OM_uint32 *min_stat, gss_buffer_t in_buffer,
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_create_empty_oid_set(OM_uint32 *min_stat, gss_OID_set *oid_set)
 {
 	return gss_create_empty_oid_set(min_stat, oid_set);
@@ -521,7 +544,7 @@ sapgss_create_empty_oid_set(OM_uint32 *min_stat, gss_OID_set *oid_set)
 
 
 /* status: don't care */
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_add_oid_set_member(OM_uint32 *min_stat, gss_OID member_oid,
 	gss_OID_set *oid_set)
 {
@@ -530,7 +553,7 @@ sapgss_add_oid_set_member(OM_uint32 *min_stat, gss_OID member_oid,
 
 
 /* status: don't care */
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_test_oid_set_member(OM_uint32 *min_stat, gss_OID member, 
 	gss_OID_set set, int *present)
 {
@@ -538,7 +561,7 @@ sapgss_test_oid_set_member(OM_uint32 *min_stat, gss_OID member,
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_inquire_names_for_mech(OM_uint32	*min_stat, gss_OID mech_oid, 
 	gss_OID_set *name_types)
 {
@@ -547,7 +570,7 @@ sapgss_inquire_names_for_mech(OM_uint32	*min_stat, gss_OID mech_oid,
 
 
 /* status: don't care */
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_inquire_mechs_for_name(OM_uint32 *min_stat,	gss_name_t input_name, 
 	gss_OID_set *mech_set)
 {
@@ -555,7 +578,7 @@ sapgss_inquire_mechs_for_name(OM_uint32 *min_stat,	gss_name_t input_name,
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_canonicalize_name(OM_uint32 *min_stat, gss_name_t input_name,
 	gss_OID mech_type,	gss_name_t *output_name)
 {
@@ -564,7 +587,7 @@ sapgss_canonicalize_name(OM_uint32 *min_stat, gss_name_t input_name,
 }
 
 
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_export_name(OM_uint32 *min_stat,	gss_name_t input_name,
 	gss_buffer_t output_name_blob)
 {
@@ -573,7 +596,7 @@ sapgss_export_name(OM_uint32 *min_stat,	gss_name_t input_name,
 
 
 /* status: Don't care */
-OM_uint32 EXPORT_FUNCTION
+EXPORT_FUNCTION OM_uint32
 sapgss_duplicate_name(OM_uint32 *min_stat, gss_name_t src_name,
 	gss_name_t *dest_name)
 {
