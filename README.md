@@ -10,4 +10,4 @@ References
 \[1\] [SAP SNC Adapter 1.1](http://scn.sap.com/docs/DOC-14056)  
 \[2\] [MIT Kerberos 5 Documentation](http://web.mit.edu/kerberos/krb5-latest/doc)  
 \[3\] [Kerberos Consortium](http://www.kerberos.org)  
-
+\[4\] [SAP NetWeaver AS - Network Security (BC-SNC)\[1\]](http://scn.sap.com/docs/DOC-7837)  
